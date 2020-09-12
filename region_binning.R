@@ -5,7 +5,7 @@ library(tidyverse)
 library(broom)
 
 #read in data
-all_plastics <- read_csv("data/%5BData%5D_Earth_Challenge_Integrated_Data%3A_Plastic_Pollution__MLW%2C_MDMAP%2C_TIDES__.csv", guess_max = 5000) %>% 
+all_plastics <- read_csv("plastic_pollution.csv", guess_max = 5000) %>% 
   rename(lat = Y,
          long = X)
 str(all_plastics)
@@ -27,9 +27,9 @@ str(all_plastics)
 ## country: not Pakistan, China
 
 se_asia <- all_plastics %>% 
-  filter(lat < 33, lat > -16, long > 71, long < 162, COUNTRY != "China", COUNTRY != "Australia", "Pakistan")
-levels(as.factor(se_asia$COUNTRY)) %>% 
+  filter(lat < 33, lat > -16, long > 71, long < 162, COUNTRY != "China", COUNTRY != "Australia",COUNTRY != "Pakistan") %>% 
   mutate(region = "southeast asia")
+levels(as.factor(se_asia$COUNTRY)) 
 
 #N ASIA:
 ##  long > 34 < 149
@@ -133,7 +133,7 @@ levels(as.factor(w_pac$COUNTRY))
 #put em all together
 plastic_regions <- bind_rows(atl_isles, cent_am, e_afr, e_south_am, eur, mid_east, n_asia, na_west, se_asia, w_afr, w_pac, w_south_am) 
 
-write_csv(plastic_regions, "data/plastic_regions.csv")
+write_csv(plastic_regions, "plastic_regions_data.csv")
 
 #total for each
 region_totals <- plastic_regions %>% 
