@@ -2,6 +2,7 @@
 
 #load in necessary packages
 library(tidyverse)
+library(lubridate)
 
 #read in data
 df <- read_csv("plastic_regions_data.csv", guess_max = 50000) %>% 
@@ -52,7 +53,9 @@ region_sums <- region_bans %>%
   mutate(tot_hard = sum(hard1, hard2, hard3, hard4, hard5, hard6),
          tot_soft = sum(soft1, soft2, soft3, soft4, soft5, soft6, soft7, soft8),
          tot_mar = sum(mar1, mar2, mar3),
-         tot_other = sum(oth1, oth2, oth3, oth4))
+         tot_other = sum(oth1, oth2, oth3, oth4),
+         YearMonth = gsub("$", "-01", YearMonth),
+         YearMonth = ymd(YearMonth))
 
 
 #PLOTTING ---------------------------------------------------------------
@@ -60,12 +63,28 @@ region_sums <- region_bans %>%
 region_sums %>% 
   filter(COUNTRY == "Brazil") %>% 
   ggplot() +
-  geom_line(aes(x = YearMonth, y = tot_hard/length_collected_km), colour = "red") +
-  geom_line(aes(x = YearMonth, y = tot_soft/length_collected_km), colour = "green") +
-  geom_line(aes(x = YearMonth, y = tot_mar/length_collected_km), colour = "black") +
-  geom_line(aes(x = YearMonth, y = tot_other/length_collected_km), colour = "blue") +
+  geom_point(aes(x = YearMonth, y = tot_hard/(length_collected_km+10), color = "Hard Plastics"), size = 0.75) +
+  geom_point(aes(x = YearMonth, y = tot_soft/(length_collected_km+10), color = "Soft Plastics"), size = 0.75) +
+  geom_point(aes(x = YearMonth, y = tot_mar/(length_collected_km+10), color = "Marine Plastics"), size = 0.75) +
+  geom_point(aes(x = YearMonth, y = tot_other/(length_collected_km+10), color = "Other Plastics"), size = 0.75) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.ticks.x = element_blank()) +
   ylab("Plastic Density (Items Collected / m Cleanup)") +
   xlab("Date") +
-  geom_vline(aes(xintercept = as.integer(as.POSIXct("2018-07"))), col = "red")
+  scale_x_date(date_labels = "%Y %b")+
+  geom_vline(aes(xintercept = as.Date("2018-07-15")), col = "red", size = 1) +
+  ylim(c(0,750))
+
+region_sums %>% 
+  filter(region == "southeast asia") %>% 
+  ggplot() +
+  geom_point(aes(x = YearMonth, y = tot_hard/(length_collected_km+10), color = "Hard Plastics"), size = 0.75) +
+  geom_point(aes(x = YearMonth, y = tot_soft/(length_collected_km+10), color = "Soft Plastics"), size = 0.75) +
+  geom_point(aes(x = YearMonth, y = tot_mar/(length_collected_km+10), color = "Marine Plastics"), size = 0.75) +
+  geom_point(aes(x = YearMonth, y = tot_other/(length_collected_km+10), color = "Other Plastics"), size = 0.75) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.ticks.x = element_blank()) +
+  ylab("Plastic Density (Items Collected / m Cleanup)") +
+  xlab("Date") +
+  scale_x_date(date_labels = "%Y %b")+
+  geom_vline(aes(xintercept = as.Date("2018-01-01")), col = "red", size = 1.5)+
+  ylim(c(0,1000))
 
