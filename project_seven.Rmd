@@ -1,9 +1,8 @@
 ---
-title: "Citizen Science Visualization"
+title: "Shoreline plastic waste"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
-    vertical_layout: fill
+    orientation: rows
 ---
 
 ```{r setup, include=FALSE}
@@ -11,30 +10,497 @@ library(flexdashboard)
 
 # primary data set - Earth Challenge Integrated Data: Plastic Pollution (MLW, MDMAP, TIDES)
 # https://cscloud-ec2020.opendata.arcgis.com/
-plastic_pollution_data <- read.csv("plastic_pollution.csv")
+#read in necessary packages
+library(tidyverse)
+library(broom)
+library(lubridate)
+#read in data
+all_plastics <-
+  read_csv("plastic_pollution.csv",
+    guess_max = 5000
+  ) %>%
+  rename(lat = Y,
+         long = X)
+str(all_plastics)
+# #create bins for data
+# lat_sum <- all_plastics %>%
+#   group_by(COUNTRY) %>%
+#   summarise(max_lat = max(Y),
+#             min_lat = min(Y),
+#             med_lat = median(Y),
+#             max_long = max(X),
+#             min_long = min(X),
+#             med_lat = median(Y))
+#SE ASIA:
+##  long > 71 < 162
+## lat > -16 < 33
+## country: not Pakistan, China
+se_asia <- all_plastics %>%
+  filter(
+    lat < 33,
+    lat > -16,
+    long > 71,
+    long < 162,
+    COUNTRY != "China",
+    COUNTRY != "Australia",
+    COUNTRY != "Pakistan"
+  ) %>% 
+  mutate(region = "southeast asia")
+levels(as.factor(se_asia$COUNTRY))
+  
+#N ASIA:
+##  long > 34 < 149
+##  lat > 18
+## country: not Pakistan, kyrgyzstan,
+n_asia <- all_plastics %>%
+  filter(
+    lat > 18 ,
+    long > 73,
+    long < 149,
+    COUNTRY != "Pakistan",
+    COUNTRY != "Kyrgyzstan",
+    COUNTRY != "Vietnam",
+    COUNTRY != "Philippines",
+    COUNTRY != "India"
+  ) %>%
+  mutate(region = "north asia")
+#check countries for errors
+levels(as.factor(n_asia$COUNTRY))
+#Middle East:
+mid_east <- all_plastics %>%
+  filter(
+    lat > 12 ,
+    lat < 56,
+    long > 27,
+    long < 80,
+    !COUNTRY %in% c(
+      "Egypt",
+      "Romania",
+      "Ukraine",
+      "Bulgaria",
+      "India",
+      "Greece",
+      "Russian Federation"
+    )
+  ) %>%
+  mutate(region = "middle east")
+#check countries for errors
+levels(as.factor(mid_east$COUNTRY))
+#west coast NAmerica
+na_west <- all_plastics %>%
+  filter(lat > 15 ,
+         lat < 83,
+         long > -171,
+         long < -99,
+         !COUNTRY %in% c("Guatemala")) %>%
+  mutate(region = "west north america")
+#check countries for errors
+levels(as.factor(na_west$COUNTRY))
+#east coast NAmerica
+na_east <- all_plastics %>%
+  filter(lat > 15 ,
+         lat < 83,
+         long < -53 ,
+         long > -99,
+         COUNTRY %in% c("Canada", "Mexico", "United States")) %>%
+  mutate(region = "east north america")
+#check countries for errors
+levels(as.factor(na_east$COUNTRY))
+#Atlantic Islands
+atl_isles <- all_plastics %>%
+  filter(
+    lat > 15 ,
+    lat < 83,
+    long < -53 ,
+    long > -99,
+    !COUNTRY %in% c("Canada", "Mexico", "United States", "Honduras", "Belize")
+  ) %>%
+  mutate(region = "atlantic islands")
+#check countries for errors
+levels(as.factor(atl_isles$COUNTRY)) #I MAY HAVE MISSED SOME SMALL ISLANDS NORTH OF SOUTH AMERICA -- grouping these with s america, because they're hard to grab with atl isles
+#central america
+cent_am <- all_plastics %>%
+  filter(
+    lat > 7 ,
+    lat < 19,
+    long > -92 ,
+    long < -77,
+    !COUNTRY %in% c("Canada", "Colombia", "Mexico", "Jamaica")
+  )  %>%
+  mutate(region = "central america")
+#check countries for errors
+levels(as.factor(cent_am$COUNTRY))
+#west south america
+w_south_am <- all_plastics %>%
+  filter(
+    lat > -55 ,
+    lat < 13,
+    long > -91 ,
+    long < -61,
+    !COUNTRY %in% c("Costa Rica", "Ecuador", "Nicaragua", "Panama")
+  ) %>%
+  mutate(region = "west south america")
+#check countries for errors
+levels(as.factor(w_south_am$COUNTRY))
+#east south america
+e_south_am <- all_plastics %>%
+  filter(
+    lat > -55 ,
+    lat < 13,
+    long > -61 ,
+    long < -34,
+    !COUNTRY %in% c("Costa Rica", "Ecuador", "Nicaragua", "Panama")
+  ) %>%
+  mutate(region = "east south america")
+#check countries for errors
+levels(as.factor(e_south_am$COUNTRY))
+#europe
+eur <- all_plastics %>%
+  filter(lat > 34 ,
+         lat < 71,
+         long > -11.5 ,
+         long < 40,
+         !COUNTRY %in% c("Russian Federation", "Cyprus")) %>%
+  mutate(region = "europe")
+#check countries for errors
+levels(as.factor(eur$COUNTRY))
+#west africa
+w_afr <- all_plastics %>%
+  filter(lat > -35 ,
+         lat < 38,
+         long > -19 ,
+         long < 22,
+         !COUNTRY %in% c("Spain", "Portugal", "Greece")) %>%
+  mutate(region = "west africa")
+#check countries for errors
+levels(as.factor(w_afr$COUNTRY))
+#east africa
+e_afr <- all_plastics %>%
+  filter(
+    lat > -35 ,
+    lat < 38,
+    long > 22 ,
+    long < 52,
+    !COUNTRY %in% c(
+      "Cyprus",
+      "Greece",
+      "Turkey",
+      "Israel",
+      "Saudi Arabia",
+      "Qatar",
+      "Kuwait"
+    )
+  ) %>%
+  mutate(region = "east africa")
+#check countries for errors
+levels(as.factor(e_afr$COUNTRY))
+#Australia, New Zealand and some South Pacific Countries
+w_pac <- all_plastics %>%
+  filter(lat > -53 , lat < -8, long > 111 , long < 180, COUNTRY != "Indonesia") %>%
+  mutate(region = "west pacific")
+#check countries for errors
+levels(as.factor(w_pac$COUNTRY))
+#put em all together
+plastic_regions <-
+  bind_rows(
+    atl_isles,
+    cent_am,
+    e_afr,
+    e_south_am,
+    eur,
+    mid_east,
+    n_asia,
+    na_west,
+    na_east,
+    se_asia,
+    w_afr,
+    w_pac,
+    w_south_am
+  )
+write_csv(plastic_regions, "plastic_regions.csv")
+
+
+# Get sums of different plastic types for each region, and median lat/long
+plastic_regions_grouped <-
+  read_csv("plastic_regions.csv",
+    guess_max = 5000
+  ) %>% 
+  group_by(region) %>% 
+  summarize(meanLong=mean(na.omit(long)), 
+            meanLat=mean(na.omit(lat)),
+            `Total hard`=sum(SUM_Hard_PlasticBeverageBottle, 
+                          SUM_Hard_OtherPlasticBottle, 
+                          SUM_Hard_BucketOrCrate, 
+                          SUM_Hard_Lighter, 
+                          SUM_OtherHardPlastic, 
+                          SUM_OtherHardPlastic, 
+                          na.rm=TRUE),
+            `Total soft`=sum(SUM_PlasticOrFoamPlatesBowlsCup,
+                          SUM_Soft_Bag,
+                          SUM_Soft_WrapperOrLabel,
+                          SUM_Soft_Straw,
+                          SUM_Soft_OtherPlastic,
+                          SUM_Soft_CigaretteButts,
+                          SUM_Soft_StringRingRibbon, 
+                          na.rm=TRUE),
+            `Total marine`=sum(Fishing_Net,
+                            SUM_FishingLineLureRope,
+                            Fishing_BuoysAndFloats, 
+                          na.rm=TRUE),
+            `Total other`=sum(SUM_HardOrSoft_PlasticBottleCap,
+                           SUM_HardSoft_PersonalCareProduc,
+                           SUM_Foam_OtherPlasticDebris, 
+                          na.rm=TRUE)
+  )
+# Get total number of items for each region
+total_items_per_region <- plastic_regions_grouped %>% 
+  select(starts_with("total")) %>% 
+  summarize(totalItems=rowSums(., na.rm=TRUE))
+# Combine dataframes
+plastic_regions_grouped <- cbind(plastic_regions_grouped, total_items_per_region)
+
+
+
+
+
+
+# project_7
+
+plastic_data_2 <- read_csv ("plastic_regions.csv") %>% 
+  mutate (MonthNum = ifelse(MonthNum < 10, paste0("0", MonthNum), MonthNum),
+    YearMonth = paste(Year, MonthNum, sep = "-"))
+
+plastic_data_2 %>% 
+  group_by(YearMonth) %>% 
+  summarise(total_plastic = sum(TotalClassifiedItems_EC2020),
+            mean_plastic = mean(TotalClassifiedItems_EC2020),
+            total_items = sum (Totalltems_EventRecord),
+            total_volunteers = sum(TotalVolunteers, na.rm= TRUE), 
+            total_length_km = sum (TotalLength_m/1000, na.rm = TRUE),
+            plastic_density = (total_plastic/total_length_km)) %>%
+  ggplot(aes(YearMonth, plastic_density)) +
+  geom_point(col = "darkcyan") +
+  xlab(c("Time")) +
+  ylab ("Plastic Density in items per km")+
+  theme_minimal() + 
+  theme(axis.text.x = element_text(hjust = 1, angle = 90))
+
+# creating a column for types of plastics 
+plastic_data_3 <-  plastic_data_2 %>% 
+    group_by(YearMonth) %>% 
+mutate (hard_plastics = (SUM_Hard_PlasticBeverageBottle + SUM_Hard_OtherPlasticBottle + SUM_Hard_BucketOrCrate + SUM_Hard_Lighter +   SUM_OtherHardPlastic + SUM_HardSoftLollipopStick_EarBu), 
+        soft_plastics = (SUM_PlasticOrFoamPlatesBowlsCup + SUM_Soft_Bag + SUM_Soft_WrapperOrLabel+ SUM_Soft_Straw + SUM_Soft_OtherPlastic + SUM_Soft_CigaretteButts + SUM_Soft_StringRingRibbon), 
+        marine_items = (Fishing_Net + SUM_FishingLineLureRope+  Fishing_BuoysAndFloats), 
+        other_plastic = (SUM_HardOrSoft_PlasticBottleCap + SUM_HardSoft_PersonalCareProduc + SUM_Foam_OtherPlasticDebris + SUM_OtherPlasticDebris)) %>% 
+  select (YearMonth, region, hard_plastics, soft_plastics, marine_items, other_plastic, TotalLength_m) %>% 
+  group_by(YearMonth) %>% 
+  summarize(hard_plastics = mean(hard_plastics, na.rm = TRUE),
+            soft_plastics  = mean (soft_plastics, na.rm = TRUE),
+            marine_plastics = mean (marine_items, na.rm = TRUE), 
+            other_plastic = mean (other_plastic, na.rm = TRUE)) %>% 
+  gather(key = "plastic_type",
+         value = "plastic_density", 
+         - YearMonth)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#read in data
+df <- read_csv("plastic_regions.csv", guess_max = 50000) %>% 
+  filter(!is.na(region))
+
+#working on grouping by month
+df1 <- df %>% 
+  mutate (MonthNum = ifelse(MonthNum < 10, paste0("0", MonthNum), MonthNum),
+          YearMonth = paste(Year, MonthNum, sep = "-")) 
+
+#add in plastic straw bans
+region_bans <- df1 %>% 
+  mutate(ban_date = ifelse(COUNTRY == "Brazil", "2018-07-15", 
+                           ifelse(COUNTRY == "United Kingdom", "2018-04-15",
+                                  ifelse(ISO_CODE == "USWA", "2018-07-01",
+                                         ifelse(region == "southeast asia", "2018-01-01",
+                                                ifelse(COUNTRY == "Costa Rica", "2017-06-01", NA)))))) %>% 
+  filter(!is.na(ban_date))
+
+#get totals by plastic type (hard, soft, marine, other) for each region of interest
+#cols of interest: TotalLength_m, TotalVolunteers, TotalClassifiedItems, SUM_ columns
+region_sums <- region_bans %>% 
+  rename(total_plastic = TotalClassifiedItems_EC2020) %>%
+  group_by(YearMonth, COUNTRY, ISO_CODE, region) %>% 
+  summarise(hard1 = sum(SUM_Hard_PlasticBeverageBottle),
+            hard2 = sum(SUM_Hard_OtherPlasticBottle),
+            hard3 = sum(SUM_Hard_BucketOrCrate),
+            hard4 = sum(SUM_Hard_Lighter),
+            hard5 = sum(SUM_OtherHardPlastic),
+            hard6 = sum(SUM_HardSoftLollipopStick_EarBu),
+            soft1 = sum(SUM_PlasticOrFoamFoodContainer),
+            soft2 = sum(SUM_PlasticOrFoamPlatesBowlsCup),
+            soft3 = sum(SUM_Soft_Bag),
+            soft4 = sum(SUM_Soft_WrapperOrLabel),
+            soft5 = sum(SUM_Soft_Straw),
+            soft6 = sum(SUM_Soft_OtherPlastic),
+            soft7 = sum(SUM_Soft_CigaretteButts),
+            soft8 = sum(SUM_Soft_StringRingRibbon),
+            mar1 = sum(Fishing_Net),
+            mar2 = sum(SUM_FishingLineLureRope),
+            mar3 = sum(Fishing_BuoysAndFloats),
+            oth1 = sum(SUM_HardOrSoft_PlasticBottleCap),
+            oth2 = sum(SUM_HardSoft_PersonalCareProduc),
+            oth3 = sum(SUM_Foam_OtherPlasticDebris),
+            oth4 = sum(SUM_OtherPlasticDebris),
+            length_collected_km = sum(TotalLength_m/1000)
+            ) %>% 
+  mutate(tot_hard = sum(hard1, hard2, hard3, hard4, hard5, hard6),
+         tot_soft = sum(soft1, soft2, soft3, soft4, soft5, soft6, soft7, soft8),
+         tot_mar = sum(mar1, mar2, mar3),
+         tot_other = sum(oth1, oth2, oth3, oth4),
+         YearMonth = gsub("$", "-01", YearMonth),
+         YearMonth = ymd(YearMonth))
+
+
+
+  
+  
+
 ```
 
-Column {data-width=650}
+Row
 -----------------------------------------------------------------------
 
-### Chart A
+### Plastic waste around the world
 
 ```{r}
+# Plot pie charts on map
+# https://cran.r-project.org/web/packages/leaflet.minicharts/vignettes/introduction.html
+library(leaflet)
+library(leaflet.minicharts)
+tilesURL <- "http://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+# Set colours for pie charts
+# http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/
+colors <- c("#D55E00", # rust
+            "#E69F00", # gold
+            "#009E73", # green
+            "#999999") # grey
+            
+            #"#56B4E9") # light blue
+            #"#0072B2") # dk blue
+# Make map with overlaid charts
+basemap <- leaflet(width = "100%", height = "400px") %>%
+  addTiles(tilesURL)
+basemap %>%
+  addMinicharts(
+    plastic_regions_grouped$meanLong, plastic_regions_grouped$meanLat,
+    type = "pie",
+    chartdata = plastic_regions_grouped[, colnames(plastic_regions_grouped[4:7])],
+    colorPalette = colors,
+    legend = TRUE,
+    showLabels = TRUE,
+    width = 60
+    #width = 60 * log10(plastic_regions_grouped$totalItems) / log10(max(plastic_regions_grouped$totalItems)), transitionTime = 0
+  )  %>% 
+  addLabelOnlyMarkers (  # add labels for each region:  https://rstudio.github.io/leaflet/popups.html
+    lng = plastic_regions_grouped$meanLong,
+    lat = plastic_regions_grouped$meanLat + 5,
+    label = str_to_title(unique(plastic_regions_grouped$region)),
+    labelOptions = labelOptions(noHide = T,
+                                direction = "top",
+                                textOnly = TRUE,
+                                textsize = "15px")
+    )
 
 ```
 
-Column {data-width=350}
+Row
 -----------------------------------------------------------------------
 
-### Chart B
+### Plastic waste over time
 
 ```{r}
+# Time series by plastic type
+plastic_data_3 %>% 
+  filter (plastic_density < 5000) %>% 
+  group_by(YearMonth, plastic_type) %>% 
+  ggplot (aes(YearMonth, plastic_density, 
+              group = plastic_type, 
+              col = plastic_type)) +
+  geom_line(size = 1) +
+  xlab(c("Time")) +
+  ylab ("Plastic density")+
+  theme_minimal() + 
+  theme(axis.text.x = element_text(hjust = 1, angle = 90),
+        legend.title = element_blank()) +
+  scale_color_manual(values = c("#D55E00", # rust
+            "#009E73", # green
+            "#999999", # grey
+            "#E69F00"), # gold
+            labels = c("Hard plastics", "Marine plastics", "Other plastics", "Soft plastics")
+  )
 
 ```
 
-### Chart C
+### Plastic waste in Southeast Asia before and after Chinese plastic ban
 
 ```{r}
+region_sums %>%
+  filter(region == "southeast asia") %>%
+  ggplot() +
+  geom_point(aes(
+    x = YearMonth,
+    y = tot_hard / (length_collected_km + 10),
+    color = "Hard plastics"
+  ), size = 0.75) +
+  geom_point(aes(
+    x = YearMonth,
+    y = tot_soft / (length_collected_km + 10),
+    color = "Soft plastics"
+  ), size = 0.75) +
+  geom_point(aes(
+    x = YearMonth,
+    y = tot_mar / (length_collected_km + 10),
+    color = "Marine plastics"
+  ), size = 0.75) +
+  geom_point(aes(
+    x = YearMonth,
+    y = tot_other / (length_collected_km + 10),
+    color = "Other plastics"
+  ), size = 0.75) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks.x = element_blank(),
+        legend.title = element_blank()
+  ) +
+  ylab("Plastic density (items collected / km cleanup)") +
+  xlab("Date") +
+  scale_x_date(date_labels = "%Y %b") +
+  geom_vline(aes(xintercept = as.Date("2018-01-01")), col = "red", size = 1.5) +
+  ylim(c(0, 1000)) +
+  scale_color_manual(values = c("#D55E00", # rust
+                                "#009E73", # green
+                                "#999999", # grey
+                                "#E69F00") # gold)
+  )
 
 ```
 
+Row {data-height=100}
+-----------------------------------------------------------------------
+
+### References
+```{r}
+print(c("Dataset: https://cscloud-ec2020.opendata.arcgis.com/datasets/98631dc5bb9a4ea5a8f9c0b4ec433290_0?geometry=56.226%2C-46.748%2C-110.766%2C57.178"))
+```
