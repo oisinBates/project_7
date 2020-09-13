@@ -68,7 +68,7 @@ region_sums %>%
   geom_point(aes(x = YearMonth, y = tot_mar/(length_collected_km+10), color = "Marine Plastics"), size = 0.75) +
   geom_point(aes(x = YearMonth, y = tot_other/(length_collected_km+10), color = "Other Plastics"), size = 0.75) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.ticks.x = element_blank()) +
-  ylab("Plastic Density (Items Collected / m Cleanup)") +
+  ylab("Plastic Density (Items Collected / km Cleanup)") +
   xlab("Date") +
   scale_x_date(date_labels = "%Y %b")+
   geom_vline(aes(xintercept = as.Date("2018-07-15")), col = "red", size = 1) +
@@ -82,7 +82,7 @@ region_sums %>%
   geom_point(aes(x = YearMonth, y = tot_mar/(length_collected_km+10), color = "Marine Plastics"), size = 0.75) +
   geom_point(aes(x = YearMonth, y = tot_other/(length_collected_km+10), color = "Other Plastics"), size = 0.75) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.ticks.x = element_blank()) +
-  ylab("Plastic Density (Items Collected / m Cleanup)") +
+  ylab("Plastic Density (Items Collected / km Cleanup)") +
   xlab("Date") +
   scale_x_date(date_labels = "%Y %b")+
   geom_vline(aes(xintercept = as.Date("2018-01-01")), col = "red", size = 1.5)+
