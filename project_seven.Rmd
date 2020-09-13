@@ -1,0 +1,40 @@
+---
+title: "Citizen Science Visualization"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+
+# primary data set - Earth Challenge Integrated Data: Plastic Pollution (MLW, MDMAP, TIDES)
+# https://cscloud-ec2020.opendata.arcgis.com/
+plastic_pollution_data <- read.csv("plastic_pollution.csv")
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Chart A
+
+```{r}
+
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Chart B
+
+```{r}
+
+```
+
+### Chart C
+
+```{r}
+
+```
+
